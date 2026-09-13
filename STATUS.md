@@ -8,8 +8,8 @@
 | A Persist prefs | DONE | in 69435b8 / follow-ups |
 | B Keyboard shortcuts | DONE (this push) | feat(desk): keyboard shortcuts |
 | C PNG export | DONE | 5e9601f |
-| D Multi-symbol | NEXT | |
-| E Sticky drawings | pending | |
+| D Multi-symbol | DONE | 38dedcb |
+| E Sticky drawings | NEXT | |
 | F Replay scrub | pending | |
 | G Real tape adapter | pending | |
 | H Paper ticket → MINT | pending | |
