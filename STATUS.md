@@ -1,6 +1,6 @@
 # HERMES Desk — build status
 **Updated:** 2026-09-13  
-**Next slice:** **F — Replay scrub**  
+**Next slice:** **G — Real tape adapter**  
 **Resume:** see `BUILD_BLUEPRINT.md`
 
 | Slice | Status | Commit |
