@@ -122,6 +122,16 @@ function init() {
   loadTf(currentTf);
   syncFlags();
 
+  // Slice C — PNG export
+  const exportBtn = $('#btnExport');
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      const sym = ($('#symbolName')?.textContent || 'hermes-desk').trim();
+      const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+      chart.exportPng(`${sym}-${currentTf}m-${stamp}.png`);
+    });
+  }
+
   window.addEventListener('resize', () => chart.resize());
 
   // Slice B — keyboard shortcuts

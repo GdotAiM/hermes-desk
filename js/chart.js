@@ -77,6 +77,59 @@ export class Chart {
     this.draw();
   }
 
+  /**
+   * Slice C — export the current chart frame (candles + overlays + HUD) as a PNG.
+   * Composites the canvas onto a white-free background with the OHLC HUD
+   * burned in if it's currently visible, since the HUD is a DOM element and
+   * canvas.toBlob() only captures the <canvas> pixels.
+   */
+  exportPng(filename) {
+    const src = this.canvas;
+    const dpr = window.devicePixelRatio || 1;
+    const out = document.createElement('canvas');
+    out.width = src.width;
+    out.height = src.height;
+    const octx = out.getContext('2d');
+    octx.drawImage(src, 0, 0);
+
+    if (this.hudEl && !this.hudEl.hidden) {
+      octx.save();
+      octx.scale(dpr, dpr);
+      const left = parseFloat(this.hudEl.style.left) || 0;
+      const top = parseFloat(this.hudEl.style.top) || 0;
+      const rows = Array.from(this.hudEl.querySelectorAll('.hud-row')).map((r) => r.textContent.trim());
+      const padX = 8;
+      const padY = 6;
+      const lineH = 15;
+      const w = 132;
+      const h = padY * 2 + rows.length * lineH;
+      octx.fillStyle = 'rgba(11,14,17,0.92)';
+      octx.strokeStyle = '#2a3140';
+      octx.lineWidth = 1;
+      octx.fillRect(left, top, w, h);
+      octx.strokeRect(left, top, w, h);
+      octx.fillStyle = '#e8eaed';
+      octx.font = '11px system-ui, sans-serif';
+      octx.textBaseline = 'top';
+      rows.forEach((text, i) => {
+        octx.fillText(text, left + padX, top + padY + i * lineH);
+      });
+      octx.restore();
+    }
+
+    out.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || `hermes-desk-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, 'image/png');
+  }
+
   setTool(tool) {
     this.tool = tool;
     this.canvas.style.cursor = tool === 'cursor' ? 'crosshair' : 'cell';
