@@ -123,6 +123,39 @@ function init() {
   syncFlags();
 
   window.addEventListener('resize', () => chart.resize());
+
+  // Slice B — keyboard shortcuts
+  window.addEventListener('keydown', (e) => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/i.test(e.target.tagName)) return;
+    const tfKeys = { '1': 1, '2': 5, '3': 15, '4': 60, '5': 240, '6': 1440 };
+    if (tfKeys[e.key] != null) {
+      e.preventDefault();
+      loadTf(tfKeys[e.key]);
+      return;
+    }
+    const overlayKeys = {
+      s: 'togSessions',
+      l: 'togPDH',
+      f: 'togFVG',
+      e: 'togCE',
+      o: 'togOR',
+    };
+    if (overlayKeys[e.key]) {
+      e.preventDefault();
+      const el = document.getElementById(overlayKeys[e.key]);
+      if (el) {
+        el.checked = !el.checked;
+        syncFlags();
+      }
+      return;
+    }
+    if (e.key === 'c' || e.key === 'C') {
+      e.preventDefault();
+      const cursorBtn = document.querySelector('.tool-btn[data-tool="cursor"]');
+      if (cursorBtn) cursorBtn.click();
+    }
+  });
+
 }
 
 function updateHeader(meta) {
