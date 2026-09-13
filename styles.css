@@ -633,3 +633,53 @@ input {
   background: var(--accent-dim);
   border-color: rgba(110, 168, 254, 0.35);
 }
+
+/* —— CSV source input (Slice G) —— */
+.csv-source-group {
+  display: flex;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+}
+
+.csv-input {
+  flex: 1;
+  border: 1px solid var(--border-soft);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 10px;
+  min-height: 28px;
+  outline: none;
+}
+
+.csv-input:focus {
+  border-color: var(--accent);
+}
+
+.csv-input::placeholder {
+  color: var(--muted-2);
+}
+
+.csv-load-btn {
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.csv-clear-btn {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}

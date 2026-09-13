@@ -7,6 +7,7 @@ import { generateSeries, activeSessionLabel, SYMBOLS } from './data.js';
 import { Chart } from './chart.js';
 import { createOverlays } from './overlays.js';
 import { ReplayController } from './replay.js';
+import { loadCsv } from './adapters/csv.js';
 
 const PREFS_KEY = 'hermes-desk:prefs:v1';
 
@@ -28,6 +29,8 @@ let series = null;
 let chart = null;
 let currentTf = 15;
 let currentSymbol = 'NQ';
+// Slice G — optional CSV source (file path or URL); empty = synthetic fallback
+let csvSource = '';
 
 // Slice F — replay controller
 let replay = null;
@@ -71,6 +74,7 @@ function init() {
   const prefs = loadPrefs();
   if (typeof prefs.tf === 'number') currentTf = prefs.tf;
   if (prefs.symbol && SYMBOLS[prefs.symbol]) currentSymbol = prefs.symbol;
+  if (typeof prefs.csvSource === 'string' && prefs.csvSource) csvSource = prefs.csvSource;
   applyFlagsToDom(prefs.overlays);
 
   const canvas = $('#chart');
@@ -81,37 +85,63 @@ function init() {
   let metaHolder = { meta: null };
   chart.setOverlays(createOverlays(() => metaHolder.meta));
 
-  function loadTf(tf) {
-    currentTf = tf;
-    series = generateSeries(currentSymbol, tf);
+  /**
+   * Load bars from csvSource (if set) or fall back to synthetic.
+   * Sets series, metaHolder, chart, replay, and updates header/status.
+   */
+  async function loadData() {
+    const tf = currentTf;
+    const sym = currentSymbol;
+    if (csvSource) {
+      try {
+        const result = await loadCsv(csvSource);
+        series = result;
+        metaHolder.meta = result.meta;
+        chart.setBars(result.bars);
+        replay.setBars(result.bars);
+        replay.setFrame(-1);
+        updateHeader(result.meta);
+        updateStatus(result.meta);
+        // Update symbol desc when CSV loads (CSV may have its own symbol hint)
+        const descEl = $('#symbolDesc');
+        if (descEl) descEl.textContent = `CSV · ${result.meta.rowsParsed ?? result.bars.length} bars`;
+        applySymbolChip(sym); // keep chip highlight
+        savePrefs({ symbol: sym });
+        updateReplayUI();
+        return;
+      } catch (err) {
+        console.warn('CsvAdapter failed, falling back to synthetic:', err);
+        csvSource = '';
+        savePrefs({ csvSource: '' });
+      }
+    }
+    series = generateSeries(sym, tf);
     metaHolder.meta = series.meta;
     chart.setBars(series.bars);
     replay.setBars(series.bars);
-    replay.setFrame(-1); // stop replay on data change
+    replay.setFrame(-1);
     updateHeader(series.meta);
     updateStatus(series.meta);
+    updateReplayUI();
+  }
+
+  function loadTf(tf) {
+    currentTf = tf;
+    loadData();
     applyTfChip(tf);
     savePrefs({ tf });
-    updateReplayUI();
   }
 
   function loadSymbol(sym) {
     currentSymbol = sym;
-    series = generateSeries(sym, currentTf);
-    metaHolder.meta = series.meta;
-    chart.setBars(series.bars);
-    replay.setBars(series.bars);
-    replay.setFrame(-1); // stop replay on data change
-    updateHeader(series.meta);
-    updateStatus(series.meta);
-    // Update symbol display
+    loadData();
+    // Update symbol display from SYMBOLS registry (or CSV hint preserved above)
     const symEl = $('#symbolName');
     const descEl = $('#symbolDesc');
-    if (symEl) symEl.textContent = SYMBOLS[sym].id;
-    if (descEl) descEl.textContent = SYMBOLS[sym].name;
+    if (symEl && !csvSource) symEl.textContent = SYMBOLS[sym].id;
+    if (descEl && !csvSource) descEl.textContent = SYMBOLS[sym].name;
     applySymbolChip(sym);
     savePrefs({ symbol: sym });
-    updateReplayUI();
   }
 
   function applySymbolChip(sym) {
@@ -169,6 +199,30 @@ function init() {
 
   loadTf(currentTf);
   syncFlags();
+
+  // Slice G — CSV data source input
+  const csvInput = $('#csvSourceInput');
+  const btnLoadCsv = $('#btnLoadCsv');
+  const btnClearCsv = $('#btnClearCsv');
+  if (csvInput && csvSource) csvInput.value = csvSource;
+  if (btnLoadCsv) {
+    btnLoadCsv.addEventListener('click', () => {
+      const url = csvInput.value.trim();
+      if (url) {
+        csvSource = url;
+        savePrefs({ csvSource: url });
+        loadData();
+      }
+    });
+  }
+  if (btnClearCsv) {
+    btnClearCsv.addEventListener('click', () => {
+      csvSource = '';
+      if (csvInput) csvInput.value = '';
+      savePrefs({ csvSource: '' });
+      loadData();
+    });
+  }
 
   // Slice C — PNG export
   const exportBtn = $('#btnExport');

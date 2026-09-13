@@ -40,6 +40,11 @@
           <button type="button" class="sym-chip" data-sym="ES">ES</button>
           <button type="button" class="sym-chip" data-sym="YM">YM</button>
         </div>
+        <div class="csv-source-group" role="group" aria-label="CSV data source">
+          <input type="text" id="csvSourceInput" class="csv-input" placeholder="CSV URL or path…" />
+          <button type="button" class="btn csv-load-btn" id="btnLoadCsv" title="Load CSV data">Load</button>
+          <button type="button" class="btn ghost csv-clear-btn" id="btnClearCsv" title="Clear CSV source">✕</button>
+        </div>
         <div class="tf-group" role="group" aria-label="Timeframe">
           <button type="button" class="tf-chip" data-tf="1">1m</button>
           <button type="button" class="tf-chip" data-tf="5">5m</button>
