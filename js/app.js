@@ -431,6 +431,20 @@ function renderResearchCard(artifact, draft = false) {
   if (sessEl) sessEl.textContent = artifact.session || '—';
   if (badgeEl) badgeEl.hidden = !draft;
 
+  // Update board status chip in topbar
+  const statusChip = $('#boardStatusChip');
+  if (statusChip) {
+    const boardStatus = artifact.boardStatus;
+    if (boardStatus) {
+      statusChip.textContent = boardStatus;
+      statusChip.title = `Board status: ${boardStatus}`;
+      statusChip.hidden = false;
+      statusChip.className = 'board-status-chip board-status-' + boardStatus.toLowerCase().replace(/\s+/g, '-');
+    } else {
+      statusChip.hidden = true;
+    }
+  }
+
   // Build body HTML
   const parts = [];
 

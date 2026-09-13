@@ -91,7 +91,17 @@ export class HermesXAdapter {
     artifact.dataset.source = artifact.dataset.source || '';
     artifact.dataset.oos = !!artifact.dataset.oos;
 
+    // Extract board status from hypothesis or explicit field
+    artifact.boardStatus = artifact.boardStatus || this._extractBoardStatus(artifact.hypothesis);
+
     return artifact;
+  }
+
+  /** Parse board status label from hypothesis text (SURVIVES, FAILS, VERIFY, INCONCLUSIVE, etc.) */
+  _extractBoardStatus(hypothesis) {
+    if (!hypothesis) return null;
+    const match = hypothesis.match(/\b(SURVIVES|FAILS|VERIFY COMPLETE|INCONCLUSIVE|OPEN|HOLD)\b/i);
+    return match ? match[1].toUpperCase() : null;
   }
 
   /**

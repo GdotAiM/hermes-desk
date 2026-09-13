@@ -952,3 +952,57 @@ input {
   font-style: italic;
   padding: 8px 0;
 }
+
+/* —— Board status chip (Slice K) —— */
+.board-status-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: default;
+  white-space: nowrap;
+}
+
+.board-status-chip.board-status-survives {
+  color: #26a69a;
+  background: rgba(38, 166, 154, 0.12);
+  border-color: rgba(38, 166, 154, 0.4);
+}
+
+.board-status-chip.board-status-fails {
+  color: #ef5350;
+  background: rgba(239, 83, 80, 0.1);
+  border-color: rgba(239, 83, 80, 0.3);
+}
+
+.board-status-chip.board-status-verify-complete,
+.board-status-chip.board-status-verify {
+  color: #c9a227;
+  background: rgba(201, 162, 39, 0.1);
+  border-color: rgba(201, 162, 39, 0.35);
+}
+
+.board-status-chip.board-status-inconclusive {
+  color: #8b93a7;
+  background: rgba(139, 147, 167, 0.08);
+  border-color: rgba(139, 147, 167, 0.3);
+}
+
+.board-status-chip.board-status-open {
+  color: #6ea8fe;
+  background: rgba(110, 168, 254, 0.1);
+  border-color: rgba(110, 168, 254, 0.3);
+}
+
+.board-status-chip.board-status-hold {
+  color: #c9a227;
+  background: rgba(201, 162, 39, 0.08);
+  border-color: rgba(201, 162, 39, 0.25);
+}
