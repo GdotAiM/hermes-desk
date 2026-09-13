@@ -1,6 +1,6 @@
 # HERMES Desk — build status
-**Updated:** 2026-09-13  
-**Next slice:** **I — 2-up layout**  
+**Updated:** 2026-09-13
+**Next slice:** **K — Wire board-status chip**
 **Resume:** see `BUILD_BLUEPRINT.md`
 
 | Slice | Status | Commit |
@@ -13,4 +13,6 @@
 | F Replay scrub | DONE | 1e44e67 |
 | G Real tape adapter | DONE | 1ef1b5b |
 | H Paper ticket → MINT | DONE | c7b277e |
-| I 2-up layout | NEXT | |
+| I 2-up layout | PENDING | |
+| J HERMES-X research contract | DONE | 0d7519b |
+| K Wire board-status chip | NEXT | |
