@@ -10,7 +10,7 @@
 | C PNG export | DONE | 5e9601f |
 | D Multi-symbol | DONE | 38dedcb |
 | E Sticky drawings | DONE | b5b94b2 |
-| F Replay scrub | NEXT | |
-| G Real tape adapter | pending | |
+| F Replay scrub | DONE | 1e44e67 |
+| G Real tape adapter | NEXT | |
 | H Paper ticket → MINT | pending | |
 | I 2-up layout | pending | |
