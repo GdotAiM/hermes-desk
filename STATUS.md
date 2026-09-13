@@ -1,6 +1,6 @@
 # HERMES Desk — build status
 **Updated:** 2026-09-13  
-**Next slice:** **E — Sticky drawings**  
+**Next slice:** **F — Replay scrub**  
 **Resume:** see `BUILD_BLUEPRINT.md`
 
 | Slice | Status | Commit |
