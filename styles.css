@@ -805,3 +805,150 @@ input {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
 }
+
+/* —— Research context card (Slice J) —— */
+.research-source-group {
+  display: flex;
+  gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+.research-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+
+.research-id {
+  font-weight: 600;
+  color: var(--accent);
+  font-family: 'Courier New', monospace;
+  font-size: 10px;
+}
+
+.research-symbol {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.research-tf,
+.research-session {
+  color: var(--muted);
+}
+
+.research-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.research-section {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.research-section-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted-2);
+}
+
+.research-section-body {
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.research-evidence-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.research-evidence-list li {
+  font-size: 11px;
+  color: var(--text);
+  padding-left: 10px;
+  position: relative;
+  line-height: 1.4;
+}
+
+.research-evidence-list li::before {
+  content: '›';
+  position: absolute;
+  left: 0;
+  color: var(--accent);
+}
+
+.research-levels-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 12px;
+  font-size: 11px;
+}
+
+.research-level-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.research-level-key {
+  color: var(--muted);
+  text-transform: uppercase;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+}
+
+.research-level-val {
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.research-stats-inline {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.research-stat {
+  color: var(--muted);
+}
+
+.research-stat strong {
+  color: var(--text);
+}
+
+.draft-badge {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--warn);
+  background: rgba(201, 162, 39, 0.12);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  padding: 1px 5px;
+  border-radius: 3px;
+  vertical-align: middle;
+  margin-left: 6px;
+}
+
+.card-research-loading {
+  font-size: 11px;
+  color: var(--muted-2);
+  font-style: italic;
+  padding: 8px 0;
+}

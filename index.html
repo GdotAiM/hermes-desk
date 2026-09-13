@@ -48,6 +48,11 @@
           <button type="button" class="btn csv-load-btn" id="btnLoadCsv" title="Load CSV data">Load</button>
           <button type="button" class="btn ghost csv-clear-btn" id="btnClearCsv" title="Clear CSV source">✕</button>
         </div>
+        <div class="research-source-group" role="group" aria-label="HERMES-X research source">
+          <input type="text" id="researchSourceInput" class="csv-input" placeholder="Research JSON…" />
+          <button type="button" class="btn csv-load-btn" id="btnLoadResearch" title="Load research artifact">Load</button>
+          <button type="button" class="btn ghost csv-clear-btn" id="btnClearResearch" title="Clear research source">✕</button>
+        </div>
         <div class="tf-group" role="group" aria-label="Timeframe">
           <button type="button" class="tf-chip" data-tf="1">1m</button>
           <button type="button" class="tf-chip" data-tf="5">5m</button>
@@ -90,6 +95,23 @@
 
       <!-- Right rail -->
       <aside class="right-rail" aria-label="Market context">
+        <article class="card" id="researchCard" hidden>
+          <h2 class="card-title">
+            Research context
+            <span class="draft-badge" id="researchDraftBadge" hidden>DRAFT</span>
+          </h2>
+          <div class="research-meta">
+            <span class="research-id" id="researchId">—</span>
+            <span class="sep">·</span>
+            <span class="research-symbol" id="researchSymbol">—</span>
+            <span class="sep">·</span>
+            <span class="research-tf" id="researchTf">—</span>
+            <span class="sep">·</span>
+            <span class="research-session" id="researchSession">—</span>
+          </div>
+          <div class="research-body" id="researchBody"></div>
+        </article>
+
         <article class="card">
           <h2 class="card-title">Market read</h2>
           <ul class="read-list">

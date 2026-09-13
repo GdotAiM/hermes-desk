@@ -8,6 +8,7 @@ import { Chart } from './chart.js';
 import { createOverlays } from './overlays.js';
 import { ReplayController } from './replay.js';
 import { loadCsv } from './adapters/csv.js';
+import { loadHermesX, HermesXAdapter } from './adapters/hermesX.js';
 
 const PREFS_KEY = 'hermes-desk:prefs:v1';
 
@@ -31,6 +32,8 @@ let currentTf = 15;
 let currentSymbol = 'NQ';
 // Slice G — optional CSV source (file path or URL); empty = synthetic fallback
 let csvSource = '';
+// Slice J — optional HERMES-X research artifact source; empty = no context
+let hermesXSource = '';
 
 // Slice F — replay controller
 let replay = null;
@@ -75,6 +78,7 @@ function init() {
   if (typeof prefs.tf === 'number') currentTf = prefs.tf;
   if (prefs.symbol && SYMBOLS[prefs.symbol]) currentSymbol = prefs.symbol;
   if (typeof prefs.csvSource === 'string' && prefs.csvSource) csvSource = prefs.csvSource;
+  if (typeof prefs.hermesXSource === 'string' && prefs.hermesXSource) hermesXSource = prefs.hermesXSource;
   applyFlagsToDom(prefs.overlays);
 
   const canvas = $('#chart');
@@ -224,6 +228,69 @@ function init() {
     });
   }
 
+  // Slice J — HERMES-X research source input
+  const researchInput = $('#researchSourceInput');
+  const btnLoadResearch = $('#btnLoadResearch');
+  const btnClearResearch = $('#btnClearResearch');
+  if (researchInput && hermesXSource) researchInput.value = hermesXSource;
+  if (btnLoadResearch) {
+    btnLoadResearch.addEventListener('click', async () => {
+      const url = researchInput.value.trim();
+      if (!url) return;
+      const card = $('#researchCard');
+      const body = $('#researchBody');
+      if (card) card.hidden = false;
+      if (body) body.innerHTML = '<span class="card-research-loading">Loading research…</span>';
+      try {
+        const result = await loadHermesX(url);
+        if (result.ok && result.artifact) {
+          hermesXSource = url;
+          savePrefs({ hermesXSource: url });
+          if (card) card.hidden = false;
+          renderResearchCard(result.artifact, result.draft);
+        } else {
+          throw new Error(result.error || 'Invalid artifact');
+        }
+      } catch (err) {
+        console.warn('HERMES-X adapter failed:', err);
+        if (body) body.innerHTML = `<span style="color:var(--down);font-size:11px">Failed to load: ${err.message}</span>`;
+        hermesXSource = '';
+        savePrefs({ hermesXSource: '' });
+      }
+    });
+  }
+  if (btnClearResearch) {
+    btnClearResearch.addEventListener('click', () => {
+      hermesXSource = '';
+      if (researchInput) researchInput.value = '';
+      savePrefs({ hermesXSource: '' });
+      const card = $('#researchCard');
+      if (card) card.hidden = true;
+    });
+  }
+  // Render existing research on init if pref is set
+  if (hermesXSource) {
+    const card = $('#researchCard');
+    const body = $('#researchBody');
+    if (card) card.hidden = false;
+    if (body) body.innerHTML = '<span class="card-research-loading">Loading research…</span>';
+    loadHermesX(hermesXSource).then((result) => {
+      if (result.ok && result.artifact) {
+        renderResearchCard(result.artifact, result.draft);
+      } else {
+        if (body) body.innerHTML = '';
+        if (card) card.hidden = true;
+        hermesXSource = '';
+        savePrefs({ hermesXSource: '' });
+      }
+    }).catch(() => {
+      if (body) body.innerHTML = '';
+      if (card) card.hidden = true;
+      hermesXSource = '';
+      savePrefs({ hermesXSource: '' });
+    });
+  }
+
   // Slice C — PNG export
   const exportBtn = $('#btnExport');
   if (exportBtn) {
@@ -339,6 +406,106 @@ function updateStatus(meta) {
   const live = activeSessionLabel(Date.now());
   const chartSess = meta?.session || live;
   sessEl.textContent = `Session: ${live} (chart last bar: ${chartSess})`;
+}
+
+/**
+ * Render a HERMES-X research artifact into the right-rail card.
+ * @param {object} artifact — validated research contract
+ * @param {boolean} [draft=false] — true if parsed from text fallback
+ */
+function renderResearchCard(artifact, draft = false) {
+  const card = $('#researchCard');
+  const body = $('#researchBody');
+  const idEl = $('#researchId');
+  const symEl = $('#researchSymbol');
+  const tfEl = $('#researchTf');
+  const sessEl = $('#researchSession');
+  const badgeEl = $('#researchDraftBadge');
+
+  if (!card || !body) return;
+
+  // Header fields
+  if (idEl) idEl.textContent = artifact.researchId || '—';
+  if (symEl) symEl.textContent = artifact.symbol || '—';
+  if (tfEl) tfEl.textContent = artifact.timeframe || '—';
+  if (sessEl) sessEl.textContent = artifact.session || '—';
+  if (badgeEl) badgeEl.hidden = !draft;
+
+  // Build body HTML
+  const parts = [];
+
+  // Hypothesis
+  if (artifact.hypothesis) {
+    parts.push(`<div class="research-section">
+      <div class="research-section-title">Hypothesis</div>
+      <div class="research-section-body">${escHtml(artifact.hypothesis)}</div>
+    </div>`);
+  }
+
+  // Evidence
+  const evidenceLines = HermesXAdapter.renderEvidence(artifact.evidence);
+  if (evidenceLines && evidenceLines.length > 0) {
+    const items = evidenceLines.map((e) => `<li>${escHtml(e)}</li>`).join('');
+    parts.push(`<div class="research-section">
+      <div class="research-section-title">Evidence</div>
+      <ul class="research-evidence-list">${items}</ul>
+    </div>`);
+  }
+
+  // Levels
+  const levels = artifact.levels || {};
+  if (levels.pdh != null || levels.pdl != null || levels.liquidity?.length || levels.pdArrays?.length) {
+    const rows = [];
+    if (levels.pdh != null) rows.push(`<div class="research-level-item"><span class="research-level-key">PDH</span><span class="research-level-val">${levels.pdh}</span></div>`);
+    if (levels.pdl != null) rows.push(`<div class="research-level-item"><span class="research-level-key">PDL</span><span class="research-level-val">${levels.pdl}</span></div>`);
+    if (levels.liquidity?.length) rows.push(`<div class="research-level-item" style="grid-column:1/-1"><span class="research-level-key">Liquidity</span><span class="research-level-val">${escHtml(levels.liquidity.join(', '))}</span></div>`);
+    if (levels.pdArrays?.length) rows.push(`<div class="research-level-item" style="grid-column:1/-1"><span class="research-level-key">PD Arrays</span><span class="research-level-val">${escHtml(levels.pdArrays.join(', '))}</span></div>`);
+    parts.push(`<div class="research-section">
+      <div class="research-section-title">Levels</div>
+      <div class="research-levels-grid">${rows.join('')}</div>
+    </div>`);
+  }
+
+  // Market structure
+  const msSummary = HermesXAdapter.renderMarketStructure(artifact.marketStructure);
+  if (msSummary) {
+    parts.push(`<div class="research-section">
+      <div class="research-section-title">Market structure</div>
+      <div class="research-section-body">${escHtml(msSummary)}</div>
+    </div>`);
+  }
+
+  // Statistics
+  const statsText = HermesXAdapter.formatStats(artifact.statistics);
+  if (statsText) {
+    parts.push(`<div class="research-section">
+      <div class="research-section-title">Statistics</div>
+      <div class="research-stats-inline">${escHtml(statsText)}</div>
+    </div>`);
+  }
+
+  // Dataset info
+  const ds = artifact.dataset || {};
+  if (ds.name || ds.source || ds.oos != null) {
+    const dsParts = [];
+    if (ds.name) dsParts.push(`Dataset: ${escHtml(ds.name)}`);
+    if (ds.source) dsParts.push(`Source: ${escHtml(ds.source)}`);
+    if (ds.oos != null) dsParts.push(ds.oos ? 'OOS ✓' : 'In-sample');
+    parts.push(`<div class="research-section">
+      <div class="research-section-title">Dataset</div>
+      <div class="research-section-body">${dsParts.join(' · ')}</div>
+    </div>`);
+  }
+
+  body.innerHTML = parts.join('');
+}
+
+function escHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 if (document.readyState === 'loading') {
