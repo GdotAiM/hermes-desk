@@ -32,3 +32,7 @@ Any static server works (`npx serve`, VS Code Live Server, etc.). Opening `index
 - Connection pill shows **Paper research** — this is not a live broker.
 - Paper ticket button is intentionally disabled.
 - Data is synthetic and session-aware (Asia / London / NY), for UI research only.
+
+## Continuing the build
+
+If chat cuts off, open [`BUILD_BLUEPRINT.md`](BUILD_BLUEPRINT.md) and [`STATUS.md`](STATUS.md) — next slice is listed there.

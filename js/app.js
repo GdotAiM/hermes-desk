@@ -1,10 +1,27 @@
 /**
  * HERMES Desk — wire UI toggles, timeframe, symbol header, right rail
+ * Slice A: persist TF + overlay prefs in localStorage
  */
 
 import { generateSeries, activeSessionLabel } from './data.js';
 import { Chart } from './chart.js';
 import { createOverlays } from './overlays.js';
+
+const PREFS_KEY = 'hermes-desk:prefs:v1';
+
+function loadPrefs() {
+  try {
+    return JSON.parse(localStorage.getItem(PREFS_KEY) || '{}') || {};
+  } catch {
+    return {};
+  }
+}
+
+function savePrefs(partial) {
+  const next = { ...loadPrefs(), ...partial, updatedAt: Date.now() };
+  localStorage.setItem(PREFS_KEY, JSON.stringify(next));
+  return next;
+}
 
 let series = null;
 let chart = null;
@@ -14,15 +31,48 @@ function $(sel) {
   return document.querySelector(sel);
 }
 
+const FLAG_MAP = [
+  ['togSessions', 'sessions'],
+  ['togPDH', 'pdh'],
+  ['togFVG', 'fvg'],
+  ['togCE', 'ce'],
+  ['togOR', 'or'],
+];
+
+function readFlagsFromDom() {
+  const flags = {};
+  for (const [id, key] of FLAG_MAP) {
+    const el = document.getElementById(id);
+    flags[key] = !!(el && el.checked);
+  }
+  return flags;
+}
+
+function applyFlagsToDom(flags) {
+  if (!flags) return;
+  for (const [id, key] of FLAG_MAP) {
+    const el = document.getElementById(id);
+    if (el && typeof flags[key] === 'boolean') el.checked = flags[key];
+  }
+}
+
+function applyTfChip(tf) {
+  document.querySelectorAll('.tf-chip').forEach((b) => {
+    b.classList.toggle('active', Number(b.dataset.tf) === tf);
+  });
+}
+
 function init() {
+  const prefs = loadPrefs();
+  if (typeof prefs.tf === 'number') currentTf = prefs.tf;
+  applyFlagsToDom(prefs.overlays);
+
   const canvas = $('#chart');
   const hud = $('#ohlcHud');
   chart = new Chart(canvas, hud);
 
   let metaHolder = { meta: null };
-  chart.setOverlays(
-    createOverlays(() => metaHolder.meta)
-  );
+  chart.setOverlays(createOverlays(() => metaHolder.meta));
 
   function loadTf(tf) {
     currentTf = tf;
@@ -31,45 +81,40 @@ function init() {
     chart.setBars(series.bars);
     updateHeader(series.meta);
     updateStatus(series.meta);
+    applyTfChip(tf);
+    savePrefs({ tf });
   }
 
-  // Timeframe chips
   document.querySelectorAll('.tf-chip').forEach((btn) => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.tf-chip').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
       loadTf(Number(btn.dataset.tf));
     });
   });
 
-  // Tools
   document.querySelectorAll('.tool-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tool-btn').forEach((b) => b.classList.remove('active'));
       btn.classList.add('active');
       chart.setTool(btn.dataset.tool);
+      savePrefs({ tool: btn.dataset.tool });
     });
   });
 
-  // Overlay toggles
-  const flagMap = [
-    ['togSessions', 'sessions'],
-    ['togPDH', 'pdh'],
-    ['togFVG', 'fvg'],
-    ['togCE', 'ce'],
-    ['togOR', 'or'],
-  ];
-
-  function syncFlags() {
-    const flags = {};
-    for (const [id, key] of flagMap) {
-      const el = document.getElementById(id);
-      flags[key] = !!(el && el.checked);
-    }
-    chart.setOverlayFlags(flags);
+  if (prefs.tool) {
+    document.querySelectorAll('.tool-btn').forEach((b) => {
+      const on = b.dataset.tool === prefs.tool;
+      b.classList.toggle('active', on);
+      if (on) chart.setTool(prefs.tool);
+    });
   }
 
-  for (const [id] of flagMap) {
+  function syncFlags() {
+    const flags = readFlagsFromDom();
+    chart.setOverlayFlags(flags);
+    savePrefs({ overlays: flags });
+  }
+
+  for (const [id] of FLAG_MAP) {
     const el = document.getElementById(id);
     if (el) el.addEventListener('change', syncFlags);
   }
