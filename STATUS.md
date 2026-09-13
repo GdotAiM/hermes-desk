@@ -1,6 +1,6 @@
 # HERMES Desk — build status
 **Updated:** 2026-09-13  
-**Next slice:** **C — PNG export**  
+**Next slice:** **E — Sticky drawings**  
 **Resume:** see `BUILD_BLUEPRINT.md`
 
 | Slice | Status | Commit |
