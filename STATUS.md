@@ -1,6 +1,6 @@
 # HERMES Desk — build status
 **Updated:** 2026-09-13  
-**Next slice:** **G — Real tape adapter**  
+**Next slice:** **H — Paper ticket → MINT**  
 **Resume:** see `BUILD_BLUEPRINT.md`
 
 | Slice | Status | Commit |
@@ -11,6 +11,6 @@
 | D Multi-symbol | DONE | 38dedcb |
 | E Sticky drawings | DONE | b5b94b2 |
 | F Replay scrub | DONE | 1e44e67 |
-| G Real tape adapter | NEXT | |
-| H Paper ticket → MINT | pending | |
+| G Real tape adapter | DONE | 1ef1b5b |
+| H Paper ticket → MINT | NEXT | |
 | I 2-up layout | pending | |
