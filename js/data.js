@@ -1,7 +1,14 @@
 /**
- * HERMES Desk — synthetic NQ-like OHLC (session-aware)
+ * HERMES Desk — synthetic OHLC (session-aware)
  * Times are America/New_York (ET). Sessions: Asia, London, NY.
  */
+
+/** Symbol metadata — price level, seed, and volatility multiplier per symbol. */
+const SYMBOLS = {
+  NQ: { id: 'NQ1!', name: 'Nasdaq 100 Continuous', basePrice: 19850, volMult: 1.0, seed: 0x4e51000 },
+  ES: { id: 'ES1!', name: 'S&P 500 E-mini Continuous', basePrice: 5620,  volMult: 1.0, seed: 0x7a2c300 },
+  YM: { id: 'YM1!', name: 'Dow Futures Continuous',     basePrice: 42100, volMult: 1.0, seed: 0x1f8e500 },
+};
 
 const SESSION = {
   ASIA: { start: 18, end: 0, name: 'Asia' },      // 18:00–00:00 ET (prev evening)
@@ -56,23 +63,25 @@ function mulberry32(seed) {
 }
 
 /**
- * Generate NQ-like bars.
+ * Generate synthetic bars for a given symbol + timeframe.
+ * @param {string} [symbol] - 'NQ' | 'ES' | 'YM'
  * @param {number} tfMinutes - 1, 5, 15, 60, 240, 1440
  * @param {number} [count] - number of bars
  * @returns {{ bars: Array, meta: object }}
  */
-export function generateSeries(tfMinutes = 15, count = null) {
+export function generateSeries(symbol = 'NQ', tfMinutes = 15, count = null) {
   const defaults = { 1: 780, 5: 600, 15: 480, 60: 320, 240: 180, 1440: 120 };
   const n = count ?? defaults[tfMinutes] ?? 400;
   const step = tfMinutes * 60 * 1000;
-  const rand = mulberry32(0x4e51000 + tfMinutes);
+  const sym = SYMBOLS[symbol] || SYMBOLS.NQ;
+  const rand = mulberry32(sym.seed + tfMinutes);
 
   // End near "now" rounded to TF, weekday
   let end = Date.now();
   end = end - (end % step);
 
   const bars = [];
-  let price = 19850 + rand() * 80;
+  let price = sym.basePrice + rand() * sym.basePrice * 0.005;
   let i = 0;
   let t = end;
 
@@ -172,7 +181,7 @@ export function generateSeries(tfMinutes = 15, count = null) {
     bars,
     tfMinutes,
     meta: {
-      symbol: 'NQ1!',
+      symbol: sym.id,
       last: last.close,
       chg: roundPx(dayChg),
       chgPct: firstOfDay ? roundPx((dayChg / firstOfDay.open) * 100) : 0,
@@ -276,4 +285,4 @@ export function activeSessionLabel(ms = Date.now()) {
   return classifySession(ms);
 }
 
-export { SESSION, classifySession, etParts };
+export { SESSION, classifySession, etParts, SYMBOLS };

@@ -3,7 +3,7 @@
  * Slice A: persist TF + overlay prefs in localStorage
  */
 
-import { generateSeries, activeSessionLabel } from './data.js';
+import { generateSeries, activeSessionLabel, SYMBOLS } from './data.js';
 import { Chart } from './chart.js';
 import { createOverlays } from './overlays.js';
 
@@ -26,6 +26,7 @@ function savePrefs(partial) {
 let series = null;
 let chart = null;
 let currentTf = 15;
+let currentSymbol = 'NQ';
 
 function $(sel) {
   return document.querySelector(sel);
@@ -65,6 +66,7 @@ function applyTfChip(tf) {
 function init() {
   const prefs = loadPrefs();
   if (typeof prefs.tf === 'number') currentTf = prefs.tf;
+  if (prefs.symbol && SYMBOLS[prefs.symbol]) currentSymbol = prefs.symbol;
   applyFlagsToDom(prefs.overlays);
 
   const canvas = $('#chart');
@@ -76,7 +78,7 @@ function init() {
 
   function loadTf(tf) {
     currentTf = tf;
-    series = generateSeries(tf);
+    series = generateSeries(currentSymbol, tf);
     metaHolder.meta = series.meta;
     chart.setBars(series.bars);
     updateHeader(series.meta);
@@ -84,6 +86,41 @@ function init() {
     applyTfChip(tf);
     savePrefs({ tf });
   }
+
+  function loadSymbol(sym) {
+    currentSymbol = sym;
+    series = generateSeries(sym, currentTf);
+    metaHolder.meta = series.meta;
+    chart.setBars(series.bars);
+    updateHeader(series.meta);
+    updateStatus(series.meta);
+    // Update symbol display
+    const symEl = $('#symbolName');
+    const descEl = $('#symbolDesc');
+    if (symEl) symEl.textContent = SYMBOLS[sym].id;
+    if (descEl) descEl.textContent = SYMBOLS[sym].name;
+    applySymbolChip(sym);
+    savePrefs({ symbol: sym });
+  }
+
+  function applySymbolChip(sym) {
+    document.querySelectorAll('.sym-chip').forEach((b) => {
+      b.classList.toggle('active', b.dataset.sym === sym);
+    });
+  }
+
+  function applyTfChip(tf) {
+    document.querySelectorAll('.tf-chip').forEach((b) => {
+      b.classList.toggle('active', Number(b.dataset.tf) === tf);
+    });
+  }
+
+  // Slice D — symbol chips
+  document.querySelectorAll('.sym-chip').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      loadSymbol(btn.dataset.sym);
+    });
+  });
 
   document.querySelectorAll('.tf-chip').forEach((btn) => {
     btn.addEventListener('click', () => {

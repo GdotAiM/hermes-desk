@@ -17,7 +17,7 @@
         </div>
         <div class="symbol-block">
           <span class="symbol" id="symbolName">NQ1!</span>
-          <span class="symbol-desc">Nasdaq 100 Continuous</span>
+          <span class="symbol-desc" id="symbolDesc">Nasdaq 100 Continuous</span>
         </div>
         <div class="price-block" id="priceBlock">
           <span class="last" id="lastPrice">—</span>
@@ -35,6 +35,11 @@
     <div class="main">
       <!-- Left slim rail -->
       <aside class="left-rail" aria-label="Timeframes and tools">
+        <div class="sym-group" role="group" aria-label="Symbol">
+          <button type="button" class="sym-chip active" data-sym="NQ">NQ</button>
+          <button type="button" class="sym-chip" data-sym="ES">ES</button>
+          <button type="button" class="sym-chip" data-sym="YM">YM</button>
+        </div>
         <div class="tf-group" role="group" aria-label="Timeframe">
           <button type="button" class="tf-chip" data-tf="1">1m</button>
           <button type="button" class="tf-chip" data-tf="5">5m</button>
