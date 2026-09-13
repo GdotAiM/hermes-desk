@@ -203,6 +203,14 @@ function init() {
     }
   });
 
+  // Slice E — Delete removes selected level
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Delete' || e.key === 'Backspace') {
+      if (e.target && /^(INPUT|TEXTAREA|SELECT)$/i.test(e.target.tagName)) return;
+      chart.deleteSelected();
+    }
+  });
+
 }
 
 function updateHeader(meta) {

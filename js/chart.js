@@ -49,8 +49,12 @@ export class Chart {
     this.dragStartX = 0;
     this.dragStartOffset = 0;
 
-    this._levels = []; // user long/short levels {price, type}
+    this._levels = []; // user long/short levels {price, type, id}
     this.tool = 'cursor';
+    this._selectedIdx = -1;
+    this._draggingLevel = null;
+    this._levelDragStartY = 0;
+    this._levelDragStartPrice = 0;
 
     this._boundResize = () => this.resize();
     this._ro = new ResizeObserver(() => this.resize());
@@ -136,12 +140,69 @@ export class Chart {
   }
 
   addLevel(price, type) {
-    this._levels.push({ price, type });
+    this._levels.push({ price, type, id: Math.random().toString(36).slice(2) });
     this.draw();
   }
 
   clearLevels() {
     this._levels = [];
+    this._selectedIdx = -1;
+    this.draw();
+  }
+
+  selectLevel(idx) {
+    this._selectedIdx = idx;
+    this.draw();
+  }
+
+  deleteSelected() {
+    if (this._selectedIdx < 0 || this._selectedIdx >= this._levels.length) return;
+    this._levels.splice(this._selectedIdx, 1);
+    this._selectedIdx = -1;
+    this.draw();
+  }
+
+  startDragLevel(levelIdx, clientY) {
+    if (levelIdx < 0 || levelIdx >= this._levels.length) return;
+    this._draggingLevel = levelIdx;
+    this._levelDragStartY = clientY;
+    this._levelDragStartPrice = this._levels[levelIdx].price;
+    this._selectedIdx = levelIdx;
+  }
+
+  isNearLevel(clientX, clientY, thresholdPx = 8) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = clientX - rect.left;
+    const y = clientY - rect.top;
+    const plot = this._plotRect();
+    // Check horizontal span across plot width
+    if (x < plot.x || x > plot.x + plot.w) return -1;
+    for (let i = 0; i < this._levels.length; i++) {
+      const lv = this._levels[i];
+      const ly = this.priceToY(lv.price);
+      if (Math.abs(y - ly) <= thresholdPx) return i;
+    }
+    return -1;
+  }
+
+  _advancePointer(e) {
+    const rect = this.canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    this.mouse = { x, y, inside: true };
+    if (this.dragging && this.tool === 'cursor') {
+      const plot = this._plotRect();
+      const { count } = this._visibleRange();
+      const slot = count > 0 ? plot.w / count : 10;
+      const dx = x - this.dragStartX;
+      const dBars = Math.round(dx / slot);
+      const maxOff = Math.max(0, this.bars.length - 10);
+      this.offset = clamp(this.dragStartOffset + dBars, 0, maxOff);
+    }
+    if (this._draggingLevel !== null) {
+      const price = this.yToPrice(y);
+      this._levels[this._draggingLevel].price = Math.round(price * 100) / 100;
+    }
     this.draw();
   }
 
@@ -274,24 +335,33 @@ export class Chart {
     }
 
     // User levels
-    for (const lv of this._levels) {
+    for (let i = 0; i < this._levels.length; i++) {
+      const lv = this._levels[i];
       const y = this.priceToY(lv.price);
+      const isSelected = i === this._selectedIdx;
       ctx.beginPath();
       ctx.strokeStyle = lv.type === 'long' ? COLORS.up : COLORS.down;
-      ctx.lineWidth = 1;
+      ctx.lineWidth = isSelected ? 2 : 1;
+      ctx.globalAlpha = isSelected ? 1 : 0.7;
       ctx.setLineDash([4, 3]);
       ctx.moveTo(plot.x, y);
       ctx.lineTo(plot.x + plot.w, y);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.globalAlpha = 1;
       ctx.fillStyle = lv.type === 'long' ? COLORS.up : COLORS.down;
-      ctx.font = '11px system-ui, sans-serif';
+      ctx.font = (isSelected ? 'bold ' : '') + '11px system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.fillText(
         (lv.type === 'long' ? 'Long ' : 'Short ') + lv.price.toFixed(2),
         plot.x + 4,
         y - 4
       );
+      // Drag handle indicator
+      ctx.fillStyle = isSelected ? COLORS.crosshair : 'transparent';
+      ctx.beginPath();
+      ctx.arc(plot.x + plot.w / 2, y, 3, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     // Price axis
@@ -453,6 +523,16 @@ export class Chart {
         this.addLevel(Math.round(price * 100) / 100, this.tool);
         return;
       }
+      // Check if clicking on a level
+      const levelIdx = this.isNearLevel(e.clientX, e.clientY, 8);
+      if (levelIdx >= 0) {
+        this.selectLevel(levelIdx);
+        this.startDragLevel(levelIdx, e.clientY);
+        this.dragging = true;
+        c.setPointerCapture(e.pointerId);
+        return;
+      }
+      this._selectedIdx = -1;
       this.dragging = true;
       this.dragStartX = x;
       this.dragStartOffset = this.offset;
@@ -465,7 +545,13 @@ export class Chart {
       const y = e.clientY - rect.top;
       this.mouse = { x, y, inside: true };
 
-      if (this.dragging && this.tool === 'cursor') {
+      // Update drag handle cursor when hovering a level
+      if (!this.dragging) {
+        const hoverLevel = this.isNearLevel(e.clientX, e.clientY, 8);
+        this.canvas.style.cursor = hoverLevel >= 0 ? 'ns-resize' : 'crosshair';
+      }
+
+      if (this.dragging && this.tool === 'cursor' && this._draggingLevel === null) {
         const plot = this._plotRect();
         const { count } = this._visibleRange();
         const slot = count > 0 ? plot.w / count : 10;
@@ -474,11 +560,16 @@ export class Chart {
         const maxOff = Math.max(0, this.bars.length - 10);
         this.offset = clamp(this.dragStartOffset + dBars, 0, maxOff);
       }
+      if (this._draggingLevel !== null) {
+        const price = this.yToPrice(e.clientY - rect.top);
+        this._levels[this._draggingLevel].price = Math.round(price * 100) / 100;
+      }
       this.draw();
     });
 
     c.addEventListener('pointerup', (e) => {
       this.dragging = false;
+      this._draggingLevel = null;
       try {
         c.releasePointerCapture(e.pointerId);
       } catch (_) {}
