@@ -28,7 +28,10 @@
         <span class="pill connection" title="Research mode — synthetic data">Paper research</span>
         <span class="account-chip">Desk · Research</span>
         <button type="button" class="btn" id="btnExport" title="Export chart as PNG">Export PNG</button>
-        <button type="button" class="btn ghost" disabled title="Disabled in prototype — no live routing">Paper ticket</button>
+        <button type="button" class="btn" id="btnPaperTicket" title="Open paper ticket stub for MINT Path B">
+          <span>Paper ticket</span>
+          <span class="ticket-badge" title="MINT agent — paper only">M</span>
+        </button>
       </div>
     </header>
 
@@ -151,5 +154,49 @@
   </div>
 
   <script type="module" src="js/app.js"></script>
+
+  <!-- Paper ticket modal -->
+  <div id="ticketModal" class="modal-overlay" hidden>
+    <div class="modal-panel">
+      <div class="modal-header">
+        <span class="modal-title">Paper Ticket</span>
+        <button type="button" class="modal-close" id="btnTicketClose">✕</button>
+      </div>
+      <div class="ticket-body">
+        <div class="ticket-meta">
+          <div class="ticket-field">
+            <span class="ticket-key">Strategy</span>
+            <span class="ticket-val" id="ticketStrategy">—</span>
+          </div>
+          <div class="ticket-field">
+            <span class="ticket-key">Board status</span>
+            <span class="ticket-val" id="ticketBoard">idle · Wave 1</span>
+          </div>
+          <div class="ticket-field">
+            <span class="ticket-key">RISK</span>
+            <span class="ticket-val" id="ticketRisk">—</span>
+          </div>
+          <div class="ticket-field">
+            <span class="ticket-key">Mode</span>
+            <span class="ticket-val ticket-paper">paper</span>
+          </div>
+        </div>
+        <div class="ticket-context">
+          <p class="card-sub">Current chart context</p>
+          <ul class="ticket-list">
+            <li><span class="ticket-key">Symbol</span> <span id="ticketSymbol">—</span></li>
+            <li><span class="ticket-key">Timeframe</span> <span id="ticketTf">—</span></li>
+            <li><span class="ticket-key">Last bar</span> <span id="ticketLastBar">—</span></li>
+          </ul>
+        </div>
+        <div class="ticket-footer">
+          <p class="card-sub">MINT agent reference:</p>
+          <code class="ticket-deeplink" id="ticketDeeplink">mint-agent://desk?sym=NQ1!&tf=15m</code>
+          <p class="card-sub" style="margin-top:6px">Path B — Human-explicit paper pilot + RISK</p>
+          <p class="card-sub" style="color:var(--warn); margin-top:4px">Wave 1: zero SURVIVES. No entries. Paper only.</p>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

@@ -234,6 +234,50 @@ function init() {
     });
   }
 
+  // Slice H — Paper ticket → MINT stub
+  const btnPaperTicket = $('#btnPaperTicket');
+  if (btnPaperTicket) {
+    btnPaperTicket.addEventListener('click', () => openTicketModal());
+  }
+
+  function openTicketModal() {
+    const meta = metaHolder.meta;
+    const symEl = $('#ticketSymbol');
+    const tfEl = $('#ticketTf');
+    const lastEl = $('#ticketLastBar');
+    if (symEl && meta?.symbol) symEl.textContent = meta.symbol;
+    if (tfEl) tfEl.textContent = `${currentTf}m`;
+    if (lastEl && meta?.last != null) lastEl.textContent = meta.last.toFixed(2);
+
+    const deeplinkEl = $('#ticketDeeplink');
+    const symId = meta?.symbol || currentSymbol;
+    if (deeplinkEl) deeplinkEl.textContent = `mint-agent://desk?sym=${encodeURIComponent(symId)}&tf=${currentTf}m`;
+
+    const modal = $('#ticketModal');
+    if (modal) modal.hidden = false;
+  }
+
+  // Close modal on backdrop click or Escape
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeTicketModal();
+  });
+
+  function closeTicketModal() {
+    const modal = $('#ticketModal');
+    if (modal) modal.hidden = true;
+  }
+
+  const btnTicketClose = $('#btnTicketClose');
+  if (btnTicketClose) {
+    btnTicketClose.addEventListener('click', closeTicketModal);
+  }
+  const ticketModal = $('#ticketModal');
+  if (ticketModal) {
+    ticketModal.addEventListener('click', (e) => {
+      if (e.target === ticketModal) closeTicketModal();
+    });
+  }
+
   window.addEventListener('resize', () => chart.resize());
 
   // Slice B — keyboard shortcuts
