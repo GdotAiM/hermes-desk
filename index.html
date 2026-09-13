@@ -121,13 +121,27 @@
       </aside>
     </div>
 
+    <!-- Replay scrubber -->
+    <div id="replayBar" class="replay-bar" role="group" aria-label="Replay controls">
+      <button type="button" id="replayPlay" class="replay-btn" title="Play / Pause (Space)">▶</button>
+      <button type="button" id="replayPrev" class="replay-btn" title="Previous bar (←)">◀</button>
+      <button type="button" id="replayNext" class="replay-btn" title="Next bar (→)">▶◀</button>
+      <span id="replayFrame" class="replay-frame">—</span>
+      <input type="range" id="replayScrub" class="replay-scrub" min="0" max="400" value="0" step="1" title="Scrub frame" />
+      <span class="replay-speed-label">Speed:</span>
+      <button type="button" class="replay-speed-btn" data-ms="500" title="500 ms/bar">0.5s</button>
+      <button type="button" class="replay-speed-btn active" data-ms="300" title="300 ms/bar">0.3s</button>
+      <button type="button" class="replay-speed-btn" data-ms="150" title="150 ms/bar">0.15s</button>
+      <button type="button" class="replay-speed-btn" data-ms="50" title="50 ms/bar">50ms</button>
+    </div>
+
     <!-- Status strip -->
     <footer class="status">
       <span id="statusTz">Timezone: America/New_York (ET)</span>
       <span class="sep">·</span>
       <span id="statusSession">Session: —</span>
       <span class="sep">·</span>
-      <span>Wheel zoom · drag pan · Keys 1–6 TF · s/l/f/e/o overlays · c cursor · Long/Short level tools · Del remove level · Export PNG</span>
+      <span>Wheel zoom · drag pan · Keys 1–6 TF · s/l/f/e/o overlays · c cursor · Long/Short level · Del remove · Space play/pause · Export PNG</span>
     </footer>
   </div>
 

@@ -6,6 +6,7 @@
 import { generateSeries, activeSessionLabel, SYMBOLS } from './data.js';
 import { Chart } from './chart.js';
 import { createOverlays } from './overlays.js';
+import { ReplayController } from './replay.js';
 
 const PREFS_KEY = 'hermes-desk:prefs:v1';
 
@@ -27,6 +28,9 @@ let series = null;
 let chart = null;
 let currentTf = 15;
 let currentSymbol = 'NQ';
+
+// Slice F — replay controller
+let replay = null;
 
 function $(sel) {
   return document.querySelector(sel);
@@ -72,6 +76,7 @@ function init() {
   const canvas = $('#chart');
   const hud = $('#ohlcHud');
   chart = new Chart(canvas, hud);
+  replay = new ReplayController(chart);
 
   let metaHolder = { meta: null };
   chart.setOverlays(createOverlays(() => metaHolder.meta));
@@ -81,10 +86,13 @@ function init() {
     series = generateSeries(currentSymbol, tf);
     metaHolder.meta = series.meta;
     chart.setBars(series.bars);
+    replay.setBars(series.bars);
+    replay.setFrame(-1); // stop replay on data change
     updateHeader(series.meta);
     updateStatus(series.meta);
     applyTfChip(tf);
     savePrefs({ tf });
+    updateReplayUI();
   }
 
   function loadSymbol(sym) {
@@ -92,6 +100,8 @@ function init() {
     series = generateSeries(sym, currentTf);
     metaHolder.meta = series.meta;
     chart.setBars(series.bars);
+    replay.setBars(series.bars);
+    replay.setFrame(-1); // stop replay on data change
     updateHeader(series.meta);
     updateStatus(series.meta);
     // Update symbol display
@@ -101,6 +111,7 @@ function init() {
     if (descEl) descEl.textContent = SYMBOLS[sym].name;
     applySymbolChip(sym);
     savePrefs({ symbol: sym });
+    updateReplayUI();
   }
 
   function applySymbolChip(sym) {
@@ -237,3 +248,64 @@ if (document.readyState === 'loading') {
 } else {
   init();
 }
+
+// — Slice F — Replay / Scrubber UI wiring
+function updateReplayUI() {
+  const s = replay.state;
+  const frameEl = $('#replayFrame');
+  const playingEl = $('#replayPlaying');
+  if (frameEl) frameEl.textContent = s.frame >= 0 ? `${s.frame + 1}/${s.barsCount}` : '—';
+  if (playingEl) playingEl.textContent = s.playing ? '⏸' : '▶';
+  // Highlight active speed button
+  document.querySelectorAll('.replay-speed-btn').forEach((b) => {
+    b.classList.toggle('active', Number(b.dataset.ms) === s.speed);
+  });
+  // Refresh chart redrawn via events — already handled by replay._setReplayFrame
+  // but we also update frame display when replay fires
+}
+
+(function setupReplayUI() {
+  const playBtn = $('#replayPlay');
+  const prevBtn = $('#replayPrev');
+  const nextBtn = $('#replayNext');
+  const scrubber = $('#replayScrub');
+
+  if (playBtn) playBtn.addEventListener('click', () => replay.togglePlay());
+  if (prevBtn) prevBtn.addEventListener('click', () => {
+    replay.setFrame(Math.max(0, replay.frame - 1));
+  });
+  if (nextBtn) nextBtn.addEventListener('click', () => {
+    replay.setFrame(Math.min(replay.bars.length - 1, replay.frame + 1));
+  });
+  if (scrubber) {
+    scrubber.addEventListener('input', () => {
+      replay.setFrame(Number(scrubber.value));
+    });
+  }
+  document.querySelectorAll('.replay-speed-btn').forEach((btn) => {
+    btn.addEventListener('click', () => replay.setSpeed(Number(btn.dataset.ms)));
+  });
+
+  window.addEventListener('replay:frame', () => {
+    updateReplayUI();
+    if (scrubber) {
+      scrubber.min = '0';
+      scrubber.max = String(replay.bars.length - 1);
+      scrubber.value = String(replay.frame);
+    }
+  });
+
+  window.addEventListener('replay:state', () => updateReplayUI());
+
+  // Space = play/pause
+  window.addEventListener('keydown', (e) => {
+    if (e.target && /^(INPUT|TEXTAREA|SELECT)$/i.test(e.target.tagName)) return;
+    if (e.key === ' ') {
+      e.preventDefault();
+      replay.togglePlay();
+    }
+  });
+
+  updateReplayUI();
+})();
+

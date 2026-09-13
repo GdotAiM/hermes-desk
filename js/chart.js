@@ -55,6 +55,7 @@ export class Chart {
     this._draggingLevel = null;
     this._levelDragStartY = 0;
     this._levelDragStartPrice = 0;
+    this._replayFrame = -1; // -1 = no replay active
 
     this._boundResize = () => this.resize();
     this._ro = new ResizeObserver(() => this.resize());
@@ -168,6 +169,12 @@ export class Chart {
     this._levelDragStartY = clientY;
     this._levelDragStartPrice = this._levels[levelIdx].price;
     this._selectedIdx = levelIdx;
+  }
+
+  /** Called by ReplayController to set the frame index for the playhead. */
+  _setReplayFrame(frame) {
+    this._replayFrame = frame;
+    this.draw();
   }
 
   isNearLevel(clientX, clientY, thresholdPx = 8) {
@@ -362,6 +369,37 @@ export class Chart {
       ctx.beginPath();
       ctx.arc(plot.x + plot.w / 2, y, 3, 0, Math.PI * 2);
       ctx.fill();
+    }
+
+    // Replay playhead — vertical line at the current frame
+    if (this._replayFrame >= start && this._replayFrame < end && this.bars[this._replayFrame]) {
+      const px = this.idxToX(this._replayFrame);
+      ctx.save();
+      ctx.strokeStyle = COLORS.warn;
+      ctx.lineWidth = 2;
+      ctx.globalAlpha = 0.85;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(px, plot.y);
+      ctx.lineTo(px, plot.y + plot.h);
+      ctx.stroke();
+      // Small triangle pointer at top
+      ctx.beginPath();
+      ctx.moveTo(px, plot.y);
+      ctx.lineTo(px - 5, plot.y - 7);
+      ctx.lineTo(px + 5, plot.y - 7);
+      ctx.closePath();
+      ctx.fillStyle = COLORS.warn;
+      ctx.fill();
+      // Bar label under the triangle
+      const bar = this.bars[this._replayFrame];
+      const label = formatEt(bar.time);
+      ctx.font = 'bold 10px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      ctx.fillStyle = COLORS.warn;
+      ctx.fillText(label, px, plot.y + plot.h + 2);
+      ctx.restore();
     }
 
     // Price axis
