@@ -33,6 +33,7 @@
           <span class="ticket-badge" title="MINT agent — paper only">M</span>
         </button>
         <span class="board-status-chip" id="boardStatusChip" hidden title="Research board status"></span>
+        <button type="button" class="btn ghost" id="btnSplit" title="Toggle 2-up chart layout">⧉</button>
       </div>
     </header>
 
@@ -92,6 +93,10 @@
       <section class="chart-stage" aria-label="Chart">
         <canvas id="chart"></canvas>
         <div class="ohlc-hud" id="ohlcHud" hidden></div>
+      </section>
+      <section class="chart-stage chart-stage-split" id="chartStageB" hidden aria-label="Second chart">
+        <canvas id="chartB"></canvas>
+        <div class="ohlc-hud" id="ohlcHudB" hidden></div>
       </section>
 
       <!-- Right rail -->

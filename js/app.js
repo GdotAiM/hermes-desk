@@ -34,6 +34,9 @@ let currentSymbol = 'NQ';
 let csvSource = '';
 // Slice J — optional HERMES-X research artifact source; empty = no context
 let hermesXSource = '';
+// Slice I — optional split (2-up layout)
+let splitEnabled = false;
+let chartB = null;
 
 // Slice F — replay controller
 let replay = null;
@@ -79,6 +82,7 @@ function init() {
   if (prefs.symbol && SYMBOLS[prefs.symbol]) currentSymbol = prefs.symbol;
   if (typeof prefs.csvSource === 'string' && prefs.csvSource) csvSource = prefs.csvSource;
   if (typeof prefs.hermesXSource === 'string' && prefs.hermesXSource) hermesXSource = prefs.hermesXSource;
+  splitEnabled = !!prefs.split;
   applyFlagsToDom(prefs.overlays);
 
   const canvas = $('#chart');
@@ -88,6 +92,17 @@ function init() {
 
   let metaHolder = { meta: null };
   chart.setOverlays(createOverlays(() => metaHolder.meta));
+
+  // Slice I — split layout: create second chart if enabled
+  if (splitEnabled) {
+    const canvasB = $('#chartB');
+    const hudB = $('#ohlcHudB');
+    if (canvasB) {
+      chartB = new Chart(canvasB, hudB);
+      chartB.setOverlays(createOverlays(() => metaHolder.meta));
+      chartB._setSplitMode(true);
+    }
+  }
 
   /**
    * Load bars from csvSource (if set) or fall back to synthetic.
@@ -102,6 +117,7 @@ function init() {
         series = result;
         metaHolder.meta = result.meta;
         chart.setBars(result.bars);
+        if (chartB) chartB.setBars(result.bars);
         replay.setBars(result.bars);
         replay.setFrame(-1);
         updateHeader(result.meta);
@@ -122,6 +138,7 @@ function init() {
     series = generateSeries(sym, tf);
     metaHolder.meta = series.meta;
     chart.setBars(series.bars);
+    if (chartB) chartB.setBars(series.bars);
     replay.setBars(series.bars);
     replay.setFrame(-1);
     updateHeader(series.meta);
@@ -193,6 +210,7 @@ function init() {
   function syncFlags() {
     const flags = readFlagsFromDom();
     chart.setOverlayFlags(flags);
+    if (chartB) chartB.setOverlayFlags(flags);
     savePrefs({ overlays: flags });
   }
 
@@ -300,6 +318,20 @@ function init() {
       chart.exportPng(`${sym}-${currentTf}m-${stamp}.png`);
     });
   }
+
+  // Slice I — Split layout toggle
+  const btnSplit = $('#btnSplit');
+  if (btnSplit) {
+    btnSplit.classList.toggle('active', splitEnabled);
+    document.querySelector('.main')?.classList.toggle('split', splitEnabled);
+    btnSplit.addEventListener('click', () => {
+      splitEnabled = !splitEnabled;
+      document.querySelector('.main')?.classList.toggle('split', splitEnabled);
+      btnSplit.classList.toggle('active', splitEnabled);
+      savePrefs({ split: splitEnabled });
+    });
+  }
+
 
   // Slice H — Paper ticket → MINT stub
   const btnPaperTicket = $('#btnPaperTicket');

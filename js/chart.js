@@ -140,6 +140,12 @@ export class Chart {
     this.canvas.style.cursor = tool === 'cursor' ? 'crosshair' : 'cell';
   }
 
+  /** Enable split mode: hide replay playhead (independent view per panel). */
+  _setSplitMode(enabled) {
+    this._splitMode = !!enabled;
+    this.draw();
+  }
+
   addLevel(price, type) {
     this._levels.push({ price, type, id: Math.random().toString(36).slice(2) });
     this.draw();
@@ -372,7 +378,7 @@ export class Chart {
     }
 
     // Replay playhead — vertical line at the current frame
-    if (this._replayFrame >= start && this._replayFrame < end && this.bars[this._replayFrame]) {
+    if (!this._splitMode && this._replayFrame >= start && this._replayFrame < end && this.bars[this._replayFrame]) {
       const px = this.idxToX(this._replayFrame);
       ctx.save();
       ctx.strokeStyle = COLORS.warn;
